@@ -98,8 +98,8 @@ function path(g){let d='';eachPoly(g,p=>p.forEach(r=>d+=ring(r)));return d;}
 
 const totalNat=DATA.features.reduce((a,f)=>a+(f.properties.total||0),0);
 document.getElementById('k_total').textContent=totalNat.toLocaleString('fr-FR');
-const top=DATA.features.filter(f=>f.properties.eager).sort((a,b)=>b.properties.total-a.properties.total)[0];
-document.getElementById('k_top').textContent=top?top.properties.region:'—';
+const topReg=DATA.features.filter(f=>f.properties.eager).sort((a,b)=>b.properties.total-a.properties.total)[0];
+document.getElementById('k_top').textContent=topReg?topReg.properties.region:'—';
 
 DATA.features.forEach(f=>{
   const pr=f.properties,p=document.createElementNS(SVGNS,'path');
