@@ -27,6 +27,15 @@
   .kpi{background:#fff; border:1px solid var(--line); border-radius:12px; padding:11px 16px; min-width:120px}
   .kpi .v{font-size:22px; font-weight:700; color:var(--teal-dark); letter-spacing:-.5px}
   .kpi .l{font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; margin-top:1px}
+  .eco{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin:0 0 16px}
+  .eco h3{margin:0 0 9px;font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;font-weight:600}
+  .eco h3 .src{text-transform:none;letter-spacing:0;font-weight:400;color:#9fb0ae}
+  .eco .erow{display:flex;gap:12px;align-items:baseline;margin:4px 0;font-size:13px}
+  .eco .elab{flex:0 0 150px;color:var(--muted)}
+  .eco .eval{color:var(--ink)}
+  .eco .etags{display:flex;flex-wrap:wrap;gap:6px}
+  .eco .etag{background:#EAF3E6;color:#2f5d2a;border:1px solid #cfe3c6;border-radius:12px;padding:2px 9px;font-size:12px}
+  .eco .enote{margin-top:8px;font-size:11px;color:#9fb0ae;font-style:italic}
   .grid{display:grid; grid-template-columns:1.5fr 1fr; gap:24px; align-items:start}
   @media (max-width:860px){ .grid{grid-template-columns:1fr} }
   .mapcard{background:#fff; border:1px solid var(--line); border-radius:14px; padding:8px 8px 2px;
@@ -92,6 +101,7 @@
     <div class="kpi"><div class="v" id="k_att">—</div><div class="l">Atteinte de la cible</div></div>
   </div>
 
+  <div class="eco" id="eco"></div>
   <div class="grid">
     <div>
       <div class="seg" id="seg">
@@ -169,6 +179,7 @@ function clear(g){ while(g.firstChild)g.removeChild(g.firstChild); }
 
 function nivHTML(v){if(!v)return '';var t=v.reduce(function(a,b){return a+b;},0);if(t<=0)return '';var L=['collège','secondaire (BEPC et +)','technique (TVET)','supérieur (Bacc+1 et +)'];var C=['#C3E08C','#7CB342','#C8A96A','#007E3A'];var O=[3,1,2,0];var bar='<div style="display:flex;height:7px;border-radius:3px;overflow:hidden;margin:5px 0 4px">';O.forEach(function(i){if(v[i]>0)bar+='<span style="width:'+(100*v[i]/t)+'%;background:'+C[i]+'"></span>';});bar+='</div>';var rows='';O.forEach(function(i){if(v[i]>0){var pc=Math.round(100*v[i]/t);rows+='<div style="margin:2px 0;color:#cfe0cd;line-height:1.35;white-space:nowrap">'+L[i]+' <b style="display:inline;color:#fff">'+v[i].toLocaleString('fr-FR')+'</b>\u00a0<span style="color:#9fb0ae">('+pc+'\u00a0%)</span></div>';}});return '<div style="margin-top:6px;border-top:1px solid rgba(255,255,255,.18);padding-top:5px"><div style="color:#9fb0ae;font-size:11px;margin-bottom:2px">Niveau d\'étude</div>'+bar+rows+'</div>';}
 const PRIO=new Set(["Fenerive Est", "Maroantsetra", "Sainte Marie"]);
+const ECO={"sect": ["Agriculture et agro-industrie d’exportation (girofle, vanille, litchi, café)", "Pêche et transformation des produits de la mer", "Tourisme et écotourisme", "Commerce et services aux entreprises et ménages", "BTP et infrastructures"], "sect_short": ["Agriculture et agro-indust…", "Pêche et transformation de…", "Tourisme et écotourisme"], "nb": 13, "vis": 13, "pctf": 42, "nbesoins": 8, "nprio": 0};
 function draw(level){
   clear(gFill); clear(gLine); clear(gLbl);
   const feats=DATA[level].features;
@@ -282,6 +293,7 @@ document.getElementById('png').addEventListener('click',()=>{
 });
 document.getElementById('ovclose').addEventListener('click',()=>document.getElementById('ov').classList.remove('on'));
 document.getElementById('ov').addEventListener('click',e=>{if(e.target.id==='ov')e.currentTarget.classList.remove('on');});
+(function(){var e=ECO;var el=document.getElementById('eco');if(!e||!el)return;var tags=e.sect.map(function(s){return '<span class="etag">'+s+'</span>';}).join('');var bes=e.nbesoins>0?(e.nbesoins+' besoin'+(e.nbesoins>1?'s':'')+' identifié'+(e.nbesoins>1?'s':'')+(e.nprio>0?' · dont '+e.nprio+' en priorité élevée':' · priorités non renseignées dans le rapport')):'—';el.innerHTML='<h3>Contexte économique — secteurs &amp; emploi <span class="src">(source : Livrable 3, FID 2026)</span></h3>'+'<div class="erow"><span class="elab">Secteurs porteurs</span><span class="etags">'+tags+'</span></div>'+'<div class="erow"><span class="elab">Tissu d\'entreprises</span><span class="eval">'+e.nb+' répertoriées (dont '+e.vis+' visitées)'+(e.pctf!=null?' · '+e.pctf+' % de femmes (moyen)':'')+'</span></div>'+'<div class="erow"><span class="elab">Besoins en postes</span><span class="eval">'+bes+'</span></div>'+'<div class="enote">Données indicatives : collecte en chefs-lieux, surtout des PME — non représentatives statistiquement.</div>';})();
 </script>
 </body>
 </html>
