@@ -17,6 +17,14 @@
   .kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px 16px;min-width:130px}
   .kpi .v{font-size:23px;font-weight:700;color:var(--teal-dark);letter-spacing:-.5px}
   .kpi .l{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-top:1px}
+  .natlvl{background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px 16px;margin:0 0 16px}
+  .natlvl h3{margin:0 0 8px;font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;font-weight:600}
+  .natlvl .bar{display:flex;height:10px;border-radius:4px;overflow:hidden;margin:0 0 9px}
+  .natlvl .rows{display:flex;flex-wrap:wrap;gap:7px 22px}
+  .natlvl .it{font-size:13px;color:var(--ink);white-space:nowrap}
+  .natlvl .it .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px}
+  .natlvl .it b{font-weight:700}
+  .natlvl .it .p{color:var(--muted)}
   .grid{display:grid;grid-template-columns:1.35fr 1fr;gap:26px;align-items:start}
   @media (max-width:860px){.grid{grid-template-columns:1fr}}
   .mapcard{background:#fff;border:1px solid var(--line);border-radius:14px;padding:8px;box-shadow:0 1px 2px rgba(19,37,35,.04)}
@@ -63,6 +71,7 @@
     <div class="kpi"><div class="v">11</div><div class="l">Régions d'intervention</div></div>
   </div>
 
+  <div class="natlvl" id="natlvl"></div>
   <div class="grid">
     <div>
       <div class="seg" id="seg"><button data-m="eff" class="on">Effectifs (cohorte 1)</button><button data-m="att">Atteinte de la cible</button></div>
@@ -115,7 +124,7 @@ const gFill=document.createElementNS(SVGNS,'g'),gLbl=document.createElementNS(SV
 svg.appendChild(gFill);svg.appendChild(gLbl);
 function clr(g){while(g.firstChild)g.removeChild(g.firstChild);}
 
-function nivHTML(v){if(!v)return '';var t=v.reduce(function(a,b){return a+b;},0);if(t<=0)return '';var L=['collège','secondaire (BEPC et +)','technique (TVET)','supérieur (Bacc+1 et +)'];var C=['#C3E08C','#7CB342','#C8A96A','#007E3A'];var O=[3,1,2,0];var bar='<div style="display:flex;height:7px;border-radius:3px;overflow:hidden;margin:5px 0 4px">';O.forEach(function(i){if(v[i]>0)bar+='<span style="width:'+(100*v[i]/t)+'%;background:'+C[i]+'"></span>';});bar+='</div>';var rows='';O.forEach(function(i){if(v[i]>0)rows+='<div style="display:flex;justify-content:space-between;gap:12px"><span style="color:#cfe0cd">'+L[i]+'</span><b>'+v[i].toLocaleString('fr-FR')+'</b></div>';});return '<div style="margin-top:6px;border-top:1px solid rgba(255,255,255,.18);padding-top:5px"><div style="color:#9fb0ae;font-size:11px;margin-bottom:2px">Niveau d\'étude</div>'+bar+rows+'</div>';}
+function nivHTML(v){if(!v)return '';var t=v.reduce(function(a,b){return a+b;},0);if(t<=0)return '';var L=['collège','secondaire (BEPC et +)','technique (TVET)','supérieur (Bacc+1 et +)'];var C=['#C3E08C','#7CB342','#C8A96A','#007E3A'];var O=[3,1,2,0];var bar='<div style="display:flex;height:7px;border-radius:3px;overflow:hidden;margin:5px 0 4px">';O.forEach(function(i){if(v[i]>0)bar+='<span style="width:'+(100*v[i]/t)+'%;background:'+C[i]+'"></span>';});bar+='</div>';var rows='';O.forEach(function(i){if(v[i]>0){var pc=Math.round(100*v[i]/t);rows+='<div style="margin:2px 0;color:#cfe0cd;line-height:1.35;white-space:nowrap">'+L[i]+' <b style="display:inline;color:#fff">'+v[i].toLocaleString('fr-FR')+'</b>\u00a0<span style="color:#9fb0ae">('+pc+'\u00a0%)</span></div>';}});return '<div style="margin-top:6px;border-top:1px solid rgba(255,255,255,.18);padding-top:5px"><div style="color:#9fb0ae;font-size:11px;margin-bottom:2px">Niveau d\'étude</div>'+bar+rows+'</div>';}
 function fillFor(f){
   if(!f.properties.eager)return '#EDF0EA';
   return mode==='eff'? bin(f.properties.total,Teff,Ceff) : bin(att(f),Tatt,Catt);
@@ -169,6 +178,7 @@ DATA.features.filter(f=>f.properties.eager).sort((a,b)=>b.properties.cible-a.pro
 
 document.getElementById('seg').addEventListener('click',e=>{const b=e.target.closest('button');if(b){mode=b.dataset.m;draw();}});
 draw();
+(function(){var s=[0,0,0,0];DATA.features.forEach(function(f){var v=f.properties.niv;if(v){for(var i=0;i<4;i++)s[i]+=v[i];}});var tot=s.reduce(function(a,b){return a+b;},0);if(!tot)return;var L=['collège','secondaire (BEPC et +)','technique (TVET)','supérieur (Bacc+1 et +)'];var C=['#C3E08C','#7CB342','#C8A96A','#007E3A'];var O=[3,1,2,0];var bar='';O.forEach(function(i){if(s[i]>0)bar+='<span style="width:'+(100*s[i]/tot)+'%;background:'+C[i]+'"></span>';});var rows='';O.forEach(function(i){if(s[i]>0){var pc=Math.round(100*s[i]/tot);rows+='<span class="it"><span class="sw" style="background:'+C[i]+'"></span>'+L[i]+' <b>'+s[i].toLocaleString('fr-FR')+'</b> <span class="p">('+pc+' %)</span></span>';}});var el=document.getElementById('natlvl');if(el)el.innerHTML='<h3>Répartition nationale par niveau d\'étude — base cohorte 1 ('+tot.toLocaleString('fr-FR')+')</h3><div class="bar">'+bar+'</div><div class="rows">'+rows+'</div>';})();
 </script>
 </body>
 </html>

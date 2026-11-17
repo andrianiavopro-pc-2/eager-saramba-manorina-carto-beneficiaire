@@ -35,6 +35,7 @@
   .region{stroke:#fff; stroke-width:.5; transition:fill .1s}
   .region.hl{stroke:var(--teal-dark); stroke-width:1.4}
   .dborder{fill:none; stroke:var(--teal-dark); stroke-width:1.1; stroke-linejoin:round; pointer-events:none; opacity:.85}
+  .prioborder{fill:none;stroke:#FFD400;stroke-width:3.2;stroke-linejoin:round;pointer-events:none}
   .dlbl{font-size:10px; font-weight:700; fill:var(--ink); text-anchor:middle; pointer-events:none;
     paint-order:stroke; stroke:#fff; stroke-width:2.6px}
   .chefdot{fill:#C8A96A; stroke:#19281C; stroke-width:1.2; pointer-events:none}
@@ -101,6 +102,7 @@
         <svg id="map" viewBox="0 0 700 680" role="img" aria-label="Carte de la région"></svg>
       </div>
       <div class="legend" id="legend"></div>
+      <div style="margin-top:7px;font-size:12px;color:var(--ink)"><span style="display:inline-block;width:16px;height:0;border-top:3px solid #FFD400;vertical-align:middle;margin-right:6px"></span>Contour jaune = district prioritaire FID (à considérer en priorité)</div>
       <div class="toolbar"><button class="exp" id="png">Exporter la carte (PNG)</button></div>
     </div>
 
@@ -165,7 +167,8 @@ svg.appendChild(gFill); svg.appendChild(gLine); svg.appendChild(gLbl);
 
 function clear(g){ while(g.firstChild)g.removeChild(g.firstChild); }
 
-function nivHTML(v){if(!v)return '';var t=v.reduce(function(a,b){return a+b;},0);if(t<=0)return '';var L=['collège','secondaire (BEPC et +)','technique (TVET)','supérieur (Bacc+1 et +)'];var C=['#C3E08C','#7CB342','#C8A96A','#007E3A'];var O=[3,1,2,0];var bar='<div style="display:flex;height:7px;border-radius:3px;overflow:hidden;margin:5px 0 4px">';O.forEach(function(i){if(v[i]>0)bar+='<span style="width:'+(100*v[i]/t)+'%;background:'+C[i]+'"></span>';});bar+='</div>';var rows='';O.forEach(function(i){if(v[i]>0)rows+='<div style="display:flex;justify-content:space-between;gap:12px"><span style="color:#cfe0cd">'+L[i]+'</span><b>'+v[i].toLocaleString('fr-FR')+'</b></div>';});return '<div style="margin-top:6px;border-top:1px solid rgba(255,255,255,.18);padding-top:5px"><div style="color:#9fb0ae;font-size:11px;margin-bottom:2px">Niveau d\'étude</div>'+bar+rows+'</div>';}
+function nivHTML(v){if(!v)return '';var t=v.reduce(function(a,b){return a+b;},0);if(t<=0)return '';var L=['collège','secondaire (BEPC et +)','technique (TVET)','supérieur (Bacc+1 et +)'];var C=['#C3E08C','#7CB342','#C8A96A','#007E3A'];var O=[3,1,2,0];var bar='<div style="display:flex;height:7px;border-radius:3px;overflow:hidden;margin:5px 0 4px">';O.forEach(function(i){if(v[i]>0)bar+='<span style="width:'+(100*v[i]/t)+'%;background:'+C[i]+'"></span>';});bar+='</div>';var rows='';O.forEach(function(i){if(v[i]>0){var pc=Math.round(100*v[i]/t);rows+='<div style="margin:2px 0;color:#cfe0cd;line-height:1.35;white-space:nowrap">'+L[i]+' <b style="display:inline;color:#fff">'+v[i].toLocaleString('fr-FR')+'</b>\u00a0<span style="color:#9fb0ae">('+pc+'\u00a0%)</span></div>';}});return '<div style="margin-top:6px;border-top:1px solid rgba(255,255,255,.18);padding-top:5px"><div style="color:#9fb0ae;font-size:11px;margin-bottom:2px">Niveau d\'étude</div>'+bar+rows+'</div>';}
+const PRIO=new Set(["Fenerive Est", "Maroantsetra", "Sainte Marie"]);
 function draw(level){
   clear(gFill); clear(gLine); clear(gLbl);
   const feats=DATA[level].features;
@@ -178,7 +181,7 @@ function draw(level){
       p.classList.add('hl'); tip.style.opacity=1;
       tip.style.left=(e.clientX+14)+'px'; tip.style.top=(e.clientY+14)+'px';
       const pct=total?(100*n/total).toFixed(1):'0';
-      tip.innerHTML='<b>'+nm+'</b>'+(pr.district&&pr.commune?'<span class="s">District : '+pr.district+'</span>':'')
+      tip.innerHTML='<b>'+nm+'</b>'+(pr.district&&pr.commune?'<span class="s">District : '+pr.district+'</span>':'')+((typeof PRIO!=='undefined'&&PRIO.has(pr.district))?'<div style="margin:3px 0;color:#1a1400;background:#FFD400;display:inline-block;padding:1px 7px;border-radius:5px;font-size:11px;font-weight:700">★ Priorité FID</div>':'')
         +'<div>'+n.toLocaleString('fr-FR')+' bénéf. ('+pct+' %)</div>'
         +(pr.dkm!=null?'<div style="color:#9fb0ae">'+(pr.dkm===0?'chef-lieu de région':'à '+pr.dkm+' km du chef-lieu (vol d\'oiseau)')+'</div>':'')+nivHTML(pr.niv);
     });
@@ -194,6 +197,7 @@ function draw(level){
     t.setAttribute('x',x.toFixed(1)); t.setAttribute('y',y.toFixed(1)); t.setAttribute('class','dlbl');
     t.textContent=f.properties.district; gLbl.appendChild(t);
   });
+  DATA.districts.features.forEach(function(f){ if(PRIO.has(f.properties.district)){ var yo=document.createElementNS(SVGNS,'path'); yo.setAttribute('d',path(f.geometry)); yo.setAttribute('class','prioborder'); gLine.appendChild(yo); } });
   // chef-lieu marker
   if(DATA.chef&&DATA.chef.lp){
     const [cx,cy]=proj(DATA.chef.lp[0],DATA.chef.lp[1]);
@@ -260,7 +264,7 @@ draw('districts');
 // PNG export
 document.getElementById('png').addEventListener('click',()=>{
   const clone=svg.cloneNode(true); clone.setAttribute('xmlns',SVGNS);
-  const css='.region{stroke:#fff;stroke-width:.5}.dborder{fill:none;stroke:#0B4F4C;stroke-width:1.1;opacity:.85}'
+  const css='.region{stroke:#fff;stroke-width:.5}.dborder{fill:none;stroke:#0B4F4C;stroke-width:1.1;opacity:.85}.prioborder{fill:none;stroke:#FFD400;stroke-width:3.2;stroke-linejoin:round}'
     +'.dlbl{font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:700;fill:#132523;text-anchor:middle;paint-order:stroke;stroke:#fff;stroke-width:2.6px}';
   const st=document.createElementNS(SVGNS,'style'); st.textContent=css; clone.insertBefore(st,clone.firstChild);
   const rect=document.createElementNS(SVGNS,'rect'); rect.setAttribute('width',W); rect.setAttribute('height',H);
